@@ -191,7 +191,6 @@ class _QTGnuPlot():
 
     def quit(self):
         self.cmd('quit')
-        self._gnuplot.close_gnuplot()
 
     def get_first_filepath(self):
         '''Return filepath of first data item.'''
@@ -395,7 +394,9 @@ class _QTGnuPlot():
     def _check_style_options(self, datadict):
         if 'style' not in datadict:
             return
-        datadict = _parse_style_string(datadict['style'], datadict)
+        opts = _parse_style_string(datadict['style'])
+        for key, val in opts.iteritems():
+            datadict[key] = val
         del datadict['style']
 
     def _get_trace_options(self, datadict, defaults={}):
@@ -460,17 +461,17 @@ _MARKER_MAP = {
     'd': 13,    # Closed diamond
 }
 
-def _parse_style_string(spec, opts):
+def _parse_style_string(spec):
     if spec == '':
-        return opts
+        return {}
 
+    opts = {}
     for ch in spec:
         if ch in _COLOR_MAP:
             opts['color'] = _COLOR_MAP[ch]
         if ch in _MARKER_MAP:
             opts['pointtype'] = _MARKER_MAP[ch]
-            if opts.get('with', '') not in ['yerrorbars']:
-                opts['with'] = 'points'
+            opts['with'] = 'points'
 
     if '-' in spec:
         if 'with' in opts:

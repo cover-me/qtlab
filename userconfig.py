@@ -5,24 +5,12 @@
 config.remove([
             'datadir',
             'startdir',
+            'startscript',
             'scriptdirs',
             'user_ins_dir',
             'startgui',
             'gnuplot_terminal',
             ])
-
-# QTLab instance name and port for networked operation
-config['instance_name'] = 'qtlab_n1'
-config['port'] = 12002
-
-# A list of allowed IP ranges for remote connections
-config['allowed_ips'] = (
-#    '130.161.*.*',
-#    '145.94.*.*',
-)
-
-# Start instrument server to share with instruments with remote QTLab?
-config['instrument_server'] = False
 
 ## This sets a default location for data-storage
 #config['datadir'] = 'd:/data'
@@ -30,11 +18,8 @@ config['instrument_server'] = False
 ## This sets a default directory for qtlab to start in
 #config['startdir'] = 'd:/scripts'
 
-## A default script (or list of scripts) to run after qtlab started
-config['startscript'] = []      #e.g. 'initscript1.py'
-
-## A default script (or list of scripts) to run when qtlab closes
-config['exitscript'] = []       #e.g. ['closescript1.py', 'closescript2.py']
+## This sets a default script to run after qtlab started
+#config['startscript'] = 'initscript.py'
 
 # Add directories containing scripts here. All scripts will be added to the
 # global namespace as functions.
@@ -61,6 +46,3 @@ config['startgui'] = True
 #config['gnuplot_terminal'] = 'x11'
 #config['gnuplot_terminal'] = 'wxt'
 #config['gnuplot_terminal'] = 'windows'
-
-# Enter a filename here to log all IPython commands
-config['ipython_logfile'] = ''      #e.g. 'command.log'

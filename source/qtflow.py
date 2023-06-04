@@ -163,12 +163,6 @@ class FlowControl(SharedGObject):
                 time.sleep(max(0, delay - dt))
                 return
 
-    def _run_script(self, scriptfile):
-        return execfile(scriptfile)
-
-    def register_exit_script(self, scriptfile):
-        self.register_exit_handler(lambda: self._run_script(scriptfile))
-
     def register_exit_handler(self, func):
         if func not in self._exit_handlers:
             self._exit_handlers.append(func)
@@ -258,33 +252,24 @@ class FlowControl(SharedGObject):
         '''Set / unset pause state.'''
         self._pause = pause
 
-    def start_program(self, program, *arg_list):
+    def start_gui(self):
         import qt
 
         curdir = os.getcwd()
         os.chdir(qt.config['execdir'])
 
-        args = ['-p', str(qt.config['port']), '--name', qt.config['instance_name']]
-        args.extend(arg_list)
         if os.name == 'nt':
-            args.insert(0, '%s.bat' % program)
-            os.spawnv(os.P_NOWAIT, '%s.bat' % program, args)
+            os.spawnv(os.P_NOWAIT, 'qtlabgui.bat', ['qtlabgui.bat'])
         if os.name == 'posix':
-            args.insert(0, '%s' % program)
-            pid = os.spawnv(os.P_NOWAIT, program, args)
+            pid = os.spawnv(os.P_NOWAIT, 'qtlabgui', ['qtlabgui'])
 
         os.chdir(curdir)
-
-    def start_gui(self):
-        self.start_program('qtlabgui')
 
     def close_gui(self):
         logging.info('Emitting close-gui signal')
         self.emit('close-gui')
 
-def exception_handler(self, etype, value, tb, tb_offset=None):
-    # when the 'tb_offset' keyword argument is omitted above, ipython
-    # raises an error.
+def exception_handler(self, etype, value, tb):
     TB = AutoFormattedTB(mode='Context', color_scheme='Linux', tb_offset=1)
 
     fc = get_flowcontrol()

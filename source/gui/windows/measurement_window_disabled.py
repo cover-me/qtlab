@@ -19,21 +19,16 @@ import gtk
 import gobject
 import time
 import types
-import os
 import logging
 from gettext import gettext as _L
 
 import qtclient as qt
 from lib.gui.qtwindow import QTWindow
 from lib.gui.dropdowns import AllParametersDropdown
-from lib.gui.stopbutton import StopButton, PauseButton
-from lib import gui
+import lib.gui as gui
 
-from lib import misc
-from lib import scriptgenerator
-
-def do_print(x):
-    print x
+import lib.misc as misc
+import lib.measurement as measurement
 
 class StepToggleButton(gtk.ToggleButton):
 
@@ -255,11 +250,9 @@ class MeasurementWindow(QTWindow):
 
         self._plot_type = self.PLOT_IMAGE
         self._hold = False
+        self._plot = None
 
-        self._measurement_id = 1
-        self._measurement_start = 0
-
-        qt.flow.connect('measurement-end', self._measurement_finished_cb)
+        self._measurement = None
 
     def _create_layout(self):
         self._option_frame = gtk.Frame()
@@ -301,10 +294,11 @@ class MeasurementWindow(QTWindow):
 
         self._start_but = gtk.Button(_L('Start'))
         self._start_but.connect('clicked', self._start_clicked_cb)
-        self._stop_but = StopButton()
+        self._stop_but = gtk.Button(_L('Stop'))
+        self._stop_but.connect('clicked', self._stop_clicked_cb)
         self._stop_but.set_sensitive(False)
 
-        self._status_label = gtk.Label(_L('Idle'))
+        self._status_label =  gtk.Label(_L('Idle'))
 
         self._vbox = gtk.VBox()
         self._vbox.pack_start(self._option_frame, False, False)
@@ -330,9 +324,9 @@ class MeasurementWindow(QTWindow):
         self.hide()
         return True
 
-    def _add_loop_var(self, s, var, sweep):
+    def _add_loop_var(self, measurement, sweep):
         try:
-            ins, insvar = sweep.get_instrument_var()
+            ins, var = sweep.get_instrument_var()
             start, end = sweep.get_sweep_range()
             steps = sweep.get_steps()
         except Exception, e:
@@ -341,17 +335,17 @@ class MeasurementWindow(QTWindow):
         if steps == 0:
             logging.warning('Not adding sweep variable with 0 steps')
             return
-
         units = sweep.get_units()
-        s.add_loop(var, ins.get_name(), insvar, start, end, steps=steps)
+        measurement.add_coordinate(ins, var, start, end,
+            steps=steps, units=units)
 
-    def _add_measurement(self, s, var, meas):
+    def _add_measurement(self, measurement, meas):
         try:
-            ins, insvar = meas.get_instrument_var()
+            ins, var = meas.get_instrument_var()
         except Exception, e:
             return
 
-        s.add_meas(var, ins.get_name(), insvar)
+        measurement.add_measurement(ins, var)
 
     def set_sensitive(self, sensitive):
         self._sweep_x.set_sensitive(sensitive)
@@ -366,36 +360,62 @@ class MeasurementWindow(QTWindow):
 
     def _start_clicked_cb(self, widget):
         logging.debug('Starting measurement')
+        if qt.config.get('threading_warning', True):
+            logging.warning('The measurement window uses threading; this could result in QTLab becoming unstable!')
 
         self.set_sensitive(False)
 
         mname = self._name_entry.get_text()
         if mname == '':
             mname = 'auto'
-        delay = self._delay.get_value() / 1000.0
 
-        s = scriptgenerator.LoopGenerator(name=mname, delay=delay)
-        self._add_loop_var(s, 'z', self._sweep_z)
-        self._add_loop_var(s, 'y', self._sweep_y)
-        self._add_loop_var(s, 'x', self._sweep_x)
-        self._add_measurement(s, 'v1', self._measure_1)
-        self._add_measurement(s, 'v2', self._measure_2)
-        s.add_finish()
+        delay = self._delay.get_value()
 
-        fn = os.path.join(qt.cmd("qt.config['tempdir']"), 'meas%d.py' % self._measurement_id)
-        self._measurement_id += 1
-        f = open(fn, 'w')
-        f.write(s.get_script())
-        f.close()
+        self._measurement = measurement.Measurement(mname, delay=delay)
+        self._measurement.connect('finished', self._measurement_finished_cb)
+        self._measurement.connect('progress', self._measurement_progress_cb)
 
-        cmd = 'qt.Script(%r)()' % fn
-        qt.interpreter.ip_queue(cmd, callback=do_print)
+        self._add_loop_var(self._measurement, self._sweep_x)
+        self._add_loop_var(self._measurement, self._sweep_y)
+        self._add_loop_var(self._measurement, self._sweep_z)
+
+        self._add_measurement(self._measurement, self._measure_1)
+        self._add_measurement(self._measurement, self._measure_2)
+
+        data = self._measurement.get_data()
+        ncoord = self._measurement.get_ncoordinates()
+        nmeas = self._measurement.get_nmeasurements()
+        if ncoord == 1:
+            if not self._hold:
+                self._plot = qt.Plot2D()
+                self._plot.add_data(data)
+                if nmeas > 1:
+                    self._plot.add_data(data, valdim=2, right=True)
+        elif ncoord == 2:
+            if self._plot_type == self.PLOT_IMAGE:
+                self._plot = qt.Plot3D(data)
+            else:
+                self._plot = qt.Plot2D(data, coorddim=0, valdim=2)
+        else:
+            self._plot = None
+            logging.warning('No plot available')
+
+        if self._plot:
+            self._plot.set_labels()
 
         self._measurement_start = time.time()
+        self._measurement.start()
 
-    def _measurement_finished_cb(self, sender):
-        logging.debug('Measurement finished')
+    def _stop_clicked_cb(self, widget):
+        logging.debug('Stopping measurement')
+        if self._measurement is not None:
+            self._measurement.stop('User interrupt')
+
+    def _measurement_finished_cb(self, sender, msg):
+        logging.debug('Measurement finished: %s', msg)
         self.set_sensitive(True)
+        if self._plot is not None:
+            self._plot.save_png()
 
         runtime = time.time() - self._measurement_start
         self._status_label.set_text(_L('Finished in %s') % \

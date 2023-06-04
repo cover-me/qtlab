@@ -29,8 +29,8 @@ class SpyView():
 
         info = self._data.get_dimensions()[1]
         self._meta_info['ylabel'] = info.get('name', None)
-        self._meta_info['ystart'] = info.get('start', None)
-        self._meta_info['yend'] = info.get('end', None)
+        self._meta_info['ystart'] = info.get('end', None)
+        self._meta_info['yend'] = info.get('start', None)
         self._meta_info['ysize'] = info.get('size', None)
 
         if ncoords == 3:
@@ -50,7 +50,7 @@ class SpyView():
 
         for i in range(nvals):
             self._meta_info['val%d_label' % i] = self._data.get_dimension_name(ncoords + i)
-            self._meta_info['val%d_colnr' % i] = ncoords + i
+            self._meta_info['val%d_colnr' % i] = ncoords + i + 1
 
         return self._meta_info
 

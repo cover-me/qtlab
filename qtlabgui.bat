@@ -11,7 +11,7 @@
 
 :: Check for version of python
 IF EXIST c:\python27\python.exe (
-    SET PYTHON_PATH=c:\python27
+    SET PYTHON_PATH=..\python27
     GOTO mark1
 )
 IF EXIST c:\python26\python.exe (
@@ -21,7 +21,4 @@ IF EXIST c:\python26\python.exe (
 :mark1
 
 :: Run QTlab GUI
-start %PYTHON_PATH%\pythonw.exe clients/client_gtk.py --module gui_client --config gui_client.cfg %*
-
-:: Use this for easier debugging
-:: start %PYTHON_PATH%\python.exe clients/client_gtk.py --module gui_client --config gui_client.cfg %*
+start %PYTHON_PATH%\pythonw.exe source/gui/guiclient.py

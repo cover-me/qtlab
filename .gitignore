@@ -1,5 +1,6 @@
 .gitignore
 *.pyc
+qtlab.lock
 qtlab.log
 qtlab.cfg
 data

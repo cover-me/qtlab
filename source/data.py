@@ -357,7 +357,7 @@ class Data(SharedGObject):
 
     def get_values(self):
         '''Return info for all value dimensions.'''
-        return self._dimensions[self._ncoordinates:]
+        return self._dimensions[0:self._nvalues]
 
     def get_nvalues(self):
         '''Return number of value dimensions.'''
@@ -677,11 +677,6 @@ class Data(SharedGObject):
             line = self._format_data_value(args, 0)
 
         line += '\n'
-
-        if self._file is None:
-            logging.info('File not opened yet, doing now')
-            self.create_file()
-
         self._file.write(line)
         self._file.flush()
 

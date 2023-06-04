@@ -1,15 +1,10 @@
-example1 = qt.instruments.create('example1', 'example', address='GPIB::1', reset=True)
-dsgen = qt.instruments.create('dsgen', 'dummy_signal_generator')
-pos = qt.instruments.create('pos', 'dummy_positioner')
-combined = qt.instruments.create('combined', 'virtual_composite')
-combined.add_variable_scaled('magnet', example1, 'chA_output', 0.02, -0.13, units='mT')
-#combined.add_variable_combined('waveoffset', [{
-#    'instrument': dmm1,
-#    'parameter': 'ch2_output',
-#    'scale': 1,
-#    'offset': 0}, {
-#    'instrument': dsgen,
-#    'parameter': 'wave',
-#    'scale': 0.5,
-#    'offset': 0
-#    }], format='%.04f')
+# 105PT1
+# lockin1 = qt.instruments.create('lockin1','LI5650_20230204', address='GPIB0::14::INSTR')
+# smu1 = qt.instruments.create('smu1','Keithley2450_20230524', address='GPIB0::1::INSTR')
+# smu1.set_parameter_rate('source_level',0.03,30)
+# smu1 = qt.instruments.create('smu1','Keithley2450_20230222', address='GPIB0::1::INSTR')
+# ppms = qt.instruments.create('ppms','PPMS_20230523',address='TCPIP0::192.168.1.6::5000::SOCKET')
+
+# Pitt
+# mw = qt.instruments.create('mw','SMB100A',address='TCPIP0::192.168.1.100::7020::SOCKET')
+# ivvi = 

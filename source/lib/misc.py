@@ -1,9 +1,8 @@
-import numpy as np
+import math
 import StringIO
 import types
 import sys
 import time
-from IPython import get_ipython
 
 def dict_to_ordered_tuples(dic):
     '''Convert a dictionary to a list of tuples, sorted by key.'''
@@ -28,10 +27,10 @@ def get_dict_keys(dic, keys):
 
 def seconds_to_str(secs):
     '''Convert a number of seconds to hh:mm:ss string.'''
-    hours = np.floor(secs / 3600)
+    hours = math.floor(secs / 3600)
     secs -= hours * 3600
-    mins = np.floor(secs / 60)
-    secs = np.floor(secs - mins * 60)
+    mins = math.floor(secs / 60)
+    secs = math.floor(secs - mins * 60)
     return '%02d:%02d:%02d' % (hours, mins, secs)
 
 def pil_to_pixbuf(pilimage):
@@ -95,9 +94,35 @@ def usleep(usec):
     while (exact_time() - start) * 1e6 < usec:
         pass
 
+def get_ipython():
+    import IPython
+    if ipython_is_newer((0, 11)):
+        return IPython.core.ipapi.get()
+    else:
+        return IPython.ipapi.get()
+
 def get_traceback():
-    from IPython.core.ultratb import AutoFormattedTB
+    if ipython_is_newer((0, 11)):
+        from IPython.core.ultratb import AutoFormattedTB
+    else:
+        from IPython.ultraTB import AutoFormattedTB
     return AutoFormattedTB
+
+def ipython_is_newer(vin):
+    """
+    vin is tuple of version (a,b,c) for version "a.b.c"
+    result gives True for larger or equal version
+    """
+    import IPython
+    vs = IPython.__version__.split('.')
+    for i in range(len(vs)):
+        if i > (len(vin)-1):
+            return True
+        if int(vs[i]) > vin[i]:
+            return True
+        elif int(vs[i]) < vin[i]:
+            return False
+    return True
 
 def is_ipython():
     return get_ipython() != None
@@ -105,13 +130,19 @@ def is_ipython():
 def exit_shell():
     if is_ipython():
         ip = get_ipython()
-        ip.exit() # FIXME This gives annoying request for y/n when called
+        if ipython_is_newer((0, 11)):
+            ip.exit() # FIXME This gives annoying request for y/n when called
+        else:
+            ip.magic('Exit')
     sys.exit()
 
 def register_exit(func):
     if is_ipython():
         ip = get_ipython()
-        ip.hooks['shutdown_hook'].add(func, 1)
+        if ipython_is_newer((0, 11)):
+            ip.hooks['shutdown_hook'].add(func, 1)
+        else:
+            ip.IP.hooks.shutdown_hook.add(func, 1)
     else:
         import atexit
         atexit.register(func)

@@ -1,11 +1,5 @@
-# qtclient.py, module that should replace qt.py in clients 
-# The name of this file might be somewhat confusing due to the existence
-# of client_qt.py which contains code to start a client based on the Qt
-# toolkit.
-
 from lib.network.object_sharer import helper
 import time
-import types
 
 from lib import config
 config = config.get_config()
@@ -18,14 +12,7 @@ class constants():
     FLAG_SOFTGET = 0x08
     FLAG_PERSIST = 0x10
 
-flow = helper.find_remote_object('%s:flow' % config['instance_name'])
-if flow is None:
-    flow = helper.find_remote_object('flow')
-    if flow is None:
-        raise ValueError('Unable to locate qt.flow object (%s), client failed to start' % config['instance_name'])
-    else:
-        print 'Connected to undefined qtlab instance'
-
+flow = helper.find_object('flow')
 for i in range(100):
     status = flow.get_status()
     if not (status is None or status == "starting"):
@@ -33,10 +20,10 @@ for i in range(100):
     print 'Status: %r, waiting...' % status
     time.sleep(2)
 
-instruments = helper.find_object('%s:instruments1' % config['instance_name'])
-plots = helper.find_object('%s:namedlist_plot' % config['instance_name'])
-data = helper.find_object('%s:namedlist_data' % config['instance_name'])
-interpreter = helper.find_object('%s:python_server' % config['instance_name'])
+instruments = helper.find_object('instruments1')
+plots = helper.find_object('namedlist_plot')
+data = helper.find_object('namedlist_data')
+interpreter = helper.find_object('python_server')
 frontpanels = {}
 sliders = {}
 
@@ -44,13 +31,13 @@ from lib.gui.qtwindow import QTWindow
 windows = QTWindow.get_named_list()
 
 def get_instrument_proxy(name):
-    return helper.find_object('%s:instrument_%s' % (config['instance_name'], name))
+    return helper.find_object('instrument_%s' % name)
 
 def get_data_proxy(name):
-    return helper.find_object('%s:data_%s' % (config['instance_name'], name))
+    return helper.find_object('data_%s' % name)
 
 def get_plot_proxy(name):
-    return helper.find_object('%s:plot_%s' % (config['instance_name'], name))
+    return helper.find_object('plot_%s' % name)
 
 def cmd(cmd, callback=None):
     '''Execute a python command in the server.'''

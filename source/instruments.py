@@ -67,7 +67,7 @@ def _get_driver_module(name, do_reload=False):
         return sys.modules[name]
 
     try:
-        mod = __import__(name)
+        mod =__import__(name)
         if do_reload:
             reload(mod)
     except ImportError, e:
@@ -279,11 +279,6 @@ class Instruments(SharedGObject):
             logging.warning('Instrument "%s" already exists, removing', name)
             self.remove(name)
 
-        # Set VISA provider
-        visa_driver = kwargs.get('visa', 'pyvisa')
-        import visa
-        visa.set_visa(visa_driver)
-
         module = _get_driver_module(instype)
         if module is None:
             return self._create_invalid_ins(name, instype, **kwargs)
@@ -364,8 +359,7 @@ class Instruments(SharedGObject):
         try:
             module.detect_instruments()
             return True
-        except Exception, e:
-            logging.error('Failed to detect instruments: %s', str(e))
+        except:
             return False
 
     def remove(self, name):
